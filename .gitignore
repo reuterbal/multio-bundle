@@ -4,3 +4,9 @@ build
 install
 venv
 slurm*.out
+ecbundle/
+source/
+build*/
+install*/
+wheels/
+venv*/

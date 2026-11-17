@@ -2,10 +2,47 @@
 
 # BOOTSTRAP ecbundle-build or ecbundle-create,
 # and pass arguments to it.
+#
+# Extra subcommand handled here (not passed to ecbundle):
+#   wheel    build the Python wheels (pymultio + multiolib), see util/build-wheels.sh
 
-ecbundle_VERSION=develop
+ecbundle_VERSION=2.6.0
 
 BUNDLE_DIR="$( cd $( dirname "${BASH_SOURCE[0]}" ) && pwd -P )"
+
+usage() {
+    cat <<EOF
+Usage: ${0##*/} <command> [options]
+
+Commands:
+  create   Download all projects of the bundle (git clone / checkout)
+             ${0##*/} create --src-dir <src>
+  build    Configure and build the bundle (add --install to install)
+             ${0##*/} build --arch <arch-dir> --src-dir <src> --build-dir <build> \\
+                 [--install --install-dir <dir>] [--ninja] [-j N] [bundle options]
+  wheel    Build Python wheels (pymultio + multiolib) from an install (see util/build-wheels.sh)
+             ${0##*/} wheel --src-dir <src> --install-dir <install> [--arch <arch-dir>] [--out <dir>]
+
+Bundle options (for 'build', all off unless stated; listed by
+'${0##*/} build --help --src-dir <src>' once the bundle is created):
+  --with-mir  --with-fortran  --with-ecflow-light  --with-atlas-orca
+  --with-legacy-ifsio  --with-tests
+  --without-mpi  --without-aec   (MPI and libaec are ON by default)
+
+Any other command or option is passed on to ecbundle ${ecbundle_VERSION}.
+EOF
+}
+
+case "${1:-}" in
+    ""|-h|--help|help)
+        usage
+        exit 0
+        ;;
+    wheel)
+        shift
+        exec "${BUNDLE_DIR}/util/build-wheels.sh" "$@"
+        ;;
+esac
 
 # Download ecbundle scripts if not already available
 command_exists () { type "$1" &> /dev/null ; }

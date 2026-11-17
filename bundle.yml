@@ -3,10 +3,27 @@
 
 name    : multio-develop-bundle
 version : 0.3.0
+
+# Defaults for this bundle. An ecbundle option (see "options" below, e.g. --with-mir)
+# is passed to cmake as -D<VAR>=<VALUE> and overrides these defaults.
+# Do not set the same variable twice here: ecbundle stops with an error if the
+# top-level and the per-project "cmake" values differ.
 cmake   : >
-    ECBUILD_INSTALL_LIBRARY_HEADERS=OFF
     ECBUILD_INSTALL_FORTRAN_MODULES=OFF
     CMAKE_LINK_DEPENDS_NO_SHARED=ON
+    ENABLE_TESTS=OFF
+    BUILD_mir=OFF
+    BUILD_fckit=OFF
+    BUILD_ecflow-light=OFF
+    BUILD_atlas-orca=OFF
+    MULTIO_ENABLE_FDB5=ON
+    MULTIO_ENABLE_MIR=OFF
+    MULTIO_ENABLE_FORTRAN=OFF
+    MULTIO_ENABLE_MULTIO_OUTPUT_MANAGER=OFF
+    MULTIO_ENABLE_ECFLOW_LIGHT=OFF
+    MULTIO_ENABLE_LEGACY_IFSIO=OFF
+    ECCODES_ENABLE_FORTRAN=OFF
+    ATLAS_ENABLE_FORTRAN=OFF
 
 projects :
 
@@ -24,7 +41,7 @@ projects :
             ENABLE_ARMADILLO=OFF
             ENABLE_CUDA=OFF
             ENABLE_SANDBOX=OFF
-            ENABLE_MPI=ON
+            ECKIT_ENABLE_MPI=ON
 
     - eccodes :
         git     : git@github.com:ecmwf/eccodes
@@ -33,12 +50,11 @@ projects :
         cmake   : >
             ENABLE_ECCODES_THREADS=ON
             ENABLE_NETCDF=OFF
-            ENABLE_FORTRAN=ON
-            ENABLE_MEMFS=ON
+            ECCODES_ENABLE_MEMFS=ON
             ECCODES_INSTALL_EXTRA_TOOLS=ON
             ECCODES_ENABLE_PYTHON2=OFF
             ECCODES_ENABLE_AEC=ON
-            ENABLE_ECKIT_GEO=ON
+            ECCODES_ENABLE_ECKIT_GEO=ON
 
     - fckit :
         git     : git@github.com:ecmwf/fckit
@@ -55,19 +71,23 @@ projects :
         git     : git@github.com:ecmwf/metkit
         version : master
         require : eckit
+        cmake   : METKIT_ENABLE_ODB=OFF
 
     - fdb5 :
         git     : git@github.com:ecmwf/fdb
         version : master
         require : eckit metkit
-        cmake   : >
-            ENABLE_FDB_TOOLS=ON
 
     - atlas :
         git     : git@github.com:ecmwf/atlas
         version : master
         require : eckit
-        cmake   : ENABLE_TESSELATION=OFF ENABLE_TRANS=OFF ENABLE_CLANG_TIDY=OFF ENABLE_GRIDTOOLS_STORAGE=OFF
+        cmake   : >
+            ATLAS_ENABLE_TESSELATION=OFF
+            ATLAS_ENABLE_ECTRANS=OFF
+            ATLAS_ENABLE_CLANG_TIDY=OFF
+            ATLAS_ENABLE_GRIDTOOLS_STORAGE=OFF
+            PLUTO_ENABLE_FORTRAN=OFF
 
     - mir :
         git     : git@github.com:ecmwf/mir
@@ -76,13 +96,60 @@ projects :
 
     - multio :
         git     : git@github.com:ecmwf/multio
-        version : master
-        cmake   : >
-            ENABLE_MULTIO_SERVER=ON
-            ENABLE_LEGACY_IFSIO=ON
-            ENABLE_ECFLOW_LIGHT=ON
+        version : develop
 
     - atlas-orca :
         git     : git@github.com:ecmwf/atlas-orca
         version : master
         require : eckit
+
+options :
+
+    - with-mir :
+        help  : Build mir and enable the multio interpolate action (MIR)
+        cmake : >
+            BUILD_mir=ON
+            MULTIO_ENABLE_MIR=ON
+
+    - with-fortran :
+        help  : Build the Fortran APIs (fckit, eccodes, atlas, multio, multio output manager); needs a Fortran compiler
+        cmake : >
+            BUILD_fckit=ON
+            ECCODES_ENABLE_FORTRAN=ON
+            ATLAS_ENABLE_FORTRAN=ON
+            MULTIO_ENABLE_FORTRAN=ON
+            MULTIO_ENABLE_MULTIO_OUTPUT_MANAGER=ON
+            ECBUILD_INSTALL_FORTRAN_MODULES=ON
+
+    - with-ecflow-light :
+        help  : Build ecflow-light and enable ecFlow reporting in multio (ecflow-light needs a Fortran compiler)
+        cmake : >
+            BUILD_ecflow-light=ON
+            MULTIO_ENABLE_ECFLOW_LIGHT=ON
+
+    - with-atlas-orca :
+        help  : Build atlas-orca (ORCA grids for atlas)
+        cmake : BUILD_atlas-orca=ON
+
+    - with-legacy-ifsio :
+        help  : Enable the legacy (FDB4) IFS I/O interface in multio
+        cmake : MULTIO_ENABLE_LEGACY_IFSIO=ON
+
+    - without-mpi :
+        help  : Build without MPI (MPI is on by default)
+        cmake : >
+            ECKIT_ENABLE_MPI=OFF
+            MULTIO_ENABLE_MPI_FORTRAN=OFF
+
+    - without-aec :
+        help  : Build without libaec/AEC compression (AEC is on by default and needs libaec >= 1.1.4)
+        # ENABLE_AEC (without project prefix) is needed too: eccodes checks
+        # "NOT DEFINED ENABLE_AEC" before it looks for libaec and stops otherwise.
+        cmake : >
+            ENABLE_AEC=OFF
+            ECKIT_ENABLE_AEC=OFF
+            ECCODES_ENABLE_AEC=OFF
+
+    - with-tests :
+        help  : Build the tests of all projects (not tested)
+        cmake : ENABLE_TESTS=ON
